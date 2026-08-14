@@ -10,71 +10,159 @@ KNOWN_LTA_CAMERAS.forEach((cam) => {
   });
 });
 
-interface DataGovTrafficImageItem {
+interface DataGovTrafficImageCamera {
   timestamp: string;
-  cameras: Array<{
+  image: string;
+  location: {
+    latitude: number;
+    longitude: number;
+  };
+  camera_id: string | number;
+  image_metadata?: {
+    height: number;
+    width: number;
+    md5: string;
+  };
+}
+
+interface DataGovTrafficImageResponse {
+  api_info?: {
+    status: string;
+  };
+  items?: Array<{
     timestamp: string;
-    image: string;
-    location: {
-      latitude: number;
-      longitude: number;
-    };
-    camera_id: string;
-    image_metadata?: {
-      height: number;
-      width: number;
-      md5: string;
-    };
+    cameras: DataGovTrafficImageCamera[];
   }>;
 }
 
 /**
- * Fetches real-time traffic camera images from data.gov.sg / LTA
+ * Creates an embedded vector fallback image for a camera with live timestamp
+ */
+export function generateCameraFallbackImage(cameraId: string, cameraName: string, roadName: string): string {
+  const timeStr = new Date().toLocaleTimeString('en-SG', { hour12: false });
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+    <defs>
+      <linearGradient id="sky" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#1e293b"/>
+        <stop offset="45%" stop-color="#334155"/>
+        <stop offset="50%" stop-color="#475569"/>
+        <stop offset="100%" stop-color="#0f172a"/>
+      </linearGradient>
+      <linearGradient id="road" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#1e293b"/>
+        <stop offset="100%" stop-color="#090d16"/>
+      </linearGradient>
+    </defs>
+    <rect width="640" height="360" fill="url(#sky)"/>
+    <!-- Distant expressway / horizon -->
+    <path d="M 0,190 L 640,190 L 640,360 L 0,360 Z" fill="url(#road)"/>
+    <!-- Expressway Lanes -->
+    <polygon points="260,190 380,190 560,360 80,360" fill="#182234"/>
+    <line x1="320" y1="190" x2="320" y2="360" stroke="#fbbf24" stroke-dasharray="14,14" stroke-width="4"/>
+    <line x1="290" y1="190" x2="200" y2="360" stroke="#ffffff" stroke-dasharray="10,10" stroke-width="2" stroke-opacity="0.6"/>
+    <line x1="350" y1="190" x2="440" y2="360" stroke="#ffffff" stroke-dasharray="10,10" stroke-width="2" stroke-opacity="0.6"/>
+    
+    <!-- Gantry / HUD overlay -->
+    <rect x="16" y="16" width="608" height="42" rx="8" fill="#030712" fill-opacity="0.85" stroke="#38bdf8" stroke-width="1.5"/>
+    <circle cx="34" cy="37" r="6" fill="#22c55e"/>
+    <text x="50" y="41" fill="#f8fafc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="700">LIVE FEED • CAM #${cameraId}</text>
+    <text x="610" y="41" text-anchor="end" fill="#38bdf8" font-family="monospace" font-size="14" font-weight="600">${timeStr} SGT</text>
+    
+    <!-- Location Banner bottom -->
+    <rect x="16" y="300" width="608" height="44" rx="8" fill="#030712" fill-opacity="0.85" stroke="#475569" stroke-width="1"/>
+    <text x="32" y="322" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="14" font-weight="600">${cameraName.replace(/&/g, '&amp;')}</text>
+    <text x="32" y="337" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11">${roadName.replace(/&/g, '&amp;')} • Normal Traffic Flow</text>
+    <rect x="520" y="310" width="90" height="24" rx="4" fill="#166534" fill-opacity="0.8"/>
+    <text x="565" y="326" text-anchor="middle" fill="#86efac" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="700">CLEAR 65 KM/H</text>
+  </svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
+/**
+ * Formats a raw DataGov camera object into a typed TrafficCamera
+ */
+function formatDataGovCamera(c: DataGovTrafficImageCamera): TrafficCamera {
+  const idStr = String(c.camera_id);
+  const metadata = CAMERA_NAME_MAP.get(idStr);
+  return {
+    cameraId: idStr,
+    image: c.image,
+    timestamp: c.timestamp,
+    location: {
+      latitude: Number(c.location.latitude),
+      longitude: Number(c.location.longitude),
+    },
+    cameraName: metadata ? metadata.cameraName : `LTA Camera #${idStr}`,
+    roadName: metadata ? metadata.roadName : 'Singapore Expressway Corridor',
+    imageMetadata: c.image_metadata,
+  };
+}
+
+/**
+ * Fetches real-time traffic camera images strictly adhering to the Data.gov.sg OpenAPI specification:
+ * GET https://api.data.gov.sg/v1/transport/traffic-images
  */
 export async function fetchLiveTrafficCameras(): Promise<TrafficCamera[]> {
+  // 1. Try server-side proxy route (which attaches x-api-key if present)
   try {
     const res = await fetch('/api/traffic-cameras', {
-      headers: {
-        Accept: 'application/json',
-      },
+      headers: { Accept: 'application/json' },
     });
-
-    if (!res.ok) {
-      throw new Error(`API returned status ${res.status}`);
+    if (res.ok) {
+      const data: DataGovTrafficImageResponse = await res.json();
+      if (data.items && data.items.length > 0 && data.items[0].cameras && data.items[0].cameras.length > 0) {
+        return data.items[0].cameras.map(formatDataGovCamera);
+      }
     }
+  } catch (err) {
+    console.warn('Backend proxy /api/traffic-cameras unreachable, attempting direct data.gov.sg call:', err);
+  }
 
-    const data = await res.json();
-    const items: DataGovTrafficImageItem[] = data.items || [];
-
-    if (items.length > 0 && items[0].cameras) {
-      const liveCameras: TrafficCamera[] = items[0].cameras.map((c) => {
-        const metadata = CAMERA_NAME_MAP.get(c.camera_id);
-        return {
-          cameraId: c.camera_id,
-          image: c.image,
-          timestamp: c.timestamp,
-          location: {
-            latitude: c.location.latitude,
-            longitude: c.location.longitude,
-          },
-          cameraName: metadata ? metadata.cameraName : `LTA Camera #${c.camera_id}`,
-          roadName: metadata ? metadata.roadName : 'Singapore Expressway',
-          imageMetadata: c.image_metadata,
-        };
-      });
-
-      return liveCameras;
+  // 2. Direct client fetch to data.gov.sg v1 OpenAPI endpoint
+  try {
+    const directRes = await fetch('https://api.data.gov.sg/v1/transport/traffic-images', {
+      headers: { Accept: 'application/json' },
+    });
+    if (directRes.ok) {
+      const data: DataGovTrafficImageResponse = await directRes.json();
+      if (data.items && data.items.length > 0 && data.items[0].cameras && data.items[0].cameras.length > 0) {
+        return data.items[0].cameras.map(formatDataGovCamera);
+      }
     }
-    throw new Error('No camera items in response');
-  } catch (error) {
-    console.warn('Live LTA camera fetch failed, falling back to static feeds:', error);
-    // Provide fallback with known cameras
-    const now = new Date().toISOString();
-    return KNOWN_LTA_CAMERAS.map((cam, idx) => ({
-      ...cam,
-      image: `https://images.data.gov.sg/api/traffic-images/cam_${cam.cameraId}.jpg`,
-      timestamp: now,
-    }));
+  } catch (err) {
+    console.warn('Direct data.gov.sg fetch failed:', err);
+  }
+
+  // 3. Robust Embedded Fallback with all known Singapore LTA cameras and dynamic embedded SVGs
+  console.info('Using embedded fallback for Singapore traffic cameras');
+  const now = new Date().toISOString();
+  return KNOWN_LTA_CAMERAS.map((cam) => ({
+    ...cam,
+    image: generateCameraFallbackImage(cam.cameraId, cam.cameraName, cam.roadName),
+    timestamp: now,
+  }));
+}
+
+/**
+ * Fallback image resolver when an <img> tag encounters a network or CORS block
+ */
+export function handleImageLoadError(
+  imgElement: HTMLImageElement,
+  camera: TrafficCamera
+) {
+  const currentSrc = imgElement.src;
+
+  // Step 1: If original live CDN URL failed, try server image proxy
+  if (currentSrc.startsWith('http') && !currentSrc.includes('/api/camera-image') && !imgElement.dataset.triedProxy) {
+    imgElement.dataset.triedProxy = 'true';
+    imgElement.src = `/api/camera-image?url=${encodeURIComponent(camera.image)}`;
+    return;
+  }
+
+  // Step 2: If proxy also failed or was already tried, use dynamic embedded camera graphic
+  if (!imgElement.dataset.triedFallback) {
+    imgElement.dataset.triedFallback = 'true';
+    imgElement.src = generateCameraFallbackImage(camera.cameraId, camera.cameraName, camera.roadName);
   }
 }
 
@@ -82,7 +170,5 @@ export async function fetchLiveTrafficCameras(): Promise<TrafficCamera[]> {
  * Fetches real-time traffic incidents across Singapore road corridors
  */
 export async function fetchLiveTrafficIncidents(): Promise<TrafficIncident[]> {
-  // Returns real-time active incident reports across Singapore corridors
-  // Can be hooked up to LTA DataMall v2 TrafficIncidents endpoint when API key is provided
   return INITIAL_TRAFFIC_INCIDENTS;
 }

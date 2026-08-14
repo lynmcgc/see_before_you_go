@@ -3,6 +3,7 @@ import path from 'path';
 import dotenv from 'dotenv';
 import { createServer as createViteServer } from 'vite';
 import { handleTrafficCameras } from './api/trafficCameras';
+import { handleCameraImage } from './api/cameraImage';
 import { handleTrafficIncidents } from './api/trafficIncidents';
 import { handleSearchLocations } from './api/searchLocations';
 import { handleRoute } from './api/route';
@@ -24,6 +25,7 @@ async function startServer() {
 
   // Traffic Data feeds (LTA DataMall & data.gov.sg)
   app.get('/api/traffic-cameras', handleTrafficCameras);
+  app.get('/api/camera-image', handleCameraImage);
   app.get('/api/traffic-incidents', handleTrafficIncidents);
 
   // OneMap Backend Logic (Auth Token, Search/Geocode, RevGeocode, Routing)

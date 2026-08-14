@@ -12,6 +12,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { MatchedCamera, CameraRole, MembershipTier } from '../types';
+import { handleImageLoadError } from '../services/trafficService';
 
 interface CameraGalleryPanelProps {
   matchedCameras: MatchedCamera[];
@@ -203,11 +204,7 @@ export const CameraGalleryPanel: React.FC<CameraGalleryPanelProps> = ({
                     }`}
                     loading="lazy"
                     onError={(e) => {
-                      const img = e.currentTarget;
-                      if (!img.dataset.fallback) {
-                        img.dataset.fallback = 'true';
-                        img.src = `https://images.data.gov.sg/api/traffic-images/cam_${item.camera.cameraId}.jpg`;
-                      }
+                      handleImageLoadError(e.currentTarget, item.camera);
                     }}
                   />
 

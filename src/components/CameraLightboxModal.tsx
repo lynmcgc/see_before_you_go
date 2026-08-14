@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { X, Clock, MapPin, Compass, Camera, AlertTriangle } from 'lucide-react';
 import { MatchedCamera } from '../types';
+import { handleImageLoadError } from '../services/trafficService';
 
 interface CameraLightboxModalProps {
   matchedCamera: MatchedCamera | null;
@@ -59,11 +60,7 @@ export const CameraLightboxModal: React.FC<CameraLightboxModalProps> = ({
             referrerPolicy="no-referrer"
             className="w-full h-auto max-h-[500px] object-contain"
             onError={(e) => {
-              const img = e.currentTarget;
-              if (!img.dataset.fallback) {
-                img.dataset.fallback = 'true';
-                img.src = `https://images.data.gov.sg/api/traffic-images/cam_${camera.cameraId}.jpg`;
-              }
+              handleImageLoadError(e.currentTarget, camera);
             }}
           />
         </div>

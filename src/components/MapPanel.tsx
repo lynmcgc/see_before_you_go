@@ -207,8 +207,8 @@ export const MapPanel: React.FC<MapPanelProps> = ({
           <div class="font-bold text-slate-900">${cam.cameraName}</div>
           <div class="text-[11px] text-slate-500 font-medium">${cam.roadName}</div>
           ${matchedInfo ? `<div class="mt-1 text-[11px] font-semibold text-sky-700">${matchedInfo.pointLabel} (${matchedInfo.distanceKm} km away)</div>` : ''}
-          <div class="mt-2 rounded-lg overflow-hidden border border-slate-200">
-            <img src="${cam.image}" alt="${cam.cameraName}" referrerpolicy="no-referrer" class="w-full h-28 object-cover" onerror="this.onerror=null; this.src='https://images.data.gov.sg/api/traffic-images/cam_${cam.cameraId}.jpg'" />
+          <div class="mt-2 rounded-lg overflow-hidden border border-slate-200 bg-slate-900">
+            <img src="${cam.image}" alt="${cam.cameraName}" referrerpolicy="no-referrer" class="w-full h-28 object-cover" onerror="if(!this.dataset.p){this.dataset.p='1'; this.src='/api/camera-image?url='+encodeURIComponent('${cam.image}');}else{this.onerror=null; this.src='https://images.data.gov.sg/api/traffic-images/cam_${cam.cameraId}.jpg';}" />
           </div>
           <div class="text-[10px] text-slate-400 mt-1">LTA Camera ID #${cam.cameraId}</div>
         </div>
