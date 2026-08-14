@@ -33,14 +33,14 @@ interface DataGovTrafficImageItem {
  */
 export async function fetchLiveTrafficCameras(): Promise<TrafficCamera[]> {
   try {
-    const res = await fetch('https://api.data.gov.sg/v1/transport/traffic-images', {
+    const res = await fetch('/api/traffic-cameras', {
       headers: {
         Accept: 'application/json',
       },
     });
 
     if (!res.ok) {
-      throw new Error(`Data.gov.sg API returned status ${res.status}`);
+      throw new Error(`API returned status ${res.status}`);
     }
 
     const data = await res.json();

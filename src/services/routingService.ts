@@ -11,9 +11,7 @@ export async function searchLocations(query: string): Promise<LocationPoint[]> {
 
   try {
     const res = await fetch(
-      `https://www.onemap.gov.sg/api/common/elastic/search?searchVal=${encodeURIComponent(
-        trimmed
-      )}&returnGeom=Y&getAddrDetails=Y&pageNum=1`
+      `/api/search-locations?searchVal=${encodeURIComponent(trimmed)}`
     );
 
     if (res.ok) {
@@ -29,7 +27,7 @@ export async function searchLocations(query: string): Promise<LocationPoint[]> {
       }
     }
   } catch (err) {
-    console.debug('OneMap online search failed or blocked by CORS, using local geocoder:', err);
+    console.debug('Search failed, using local landmarks:', err);
   }
 
   // Fallback to local landmark matching
