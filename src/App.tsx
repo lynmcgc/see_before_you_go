@@ -6,6 +6,7 @@ import {
   TrafficCamera,
   TrafficIncident,
   MatchedCamera,
+  MembershipTier,
 } from './types';
 import { SINGAPORE_PRESET_LOCATIONS } from './services/singaporeData';
 import { fetchLiveTrafficCameras, fetchLiveTrafficIncidents } from './services/trafficService';
@@ -19,6 +20,7 @@ import { MapPanel } from './components/MapPanel';
 import { CameraGalleryPanel } from './components/CameraGalleryPanel';
 import { IncidentListPanel } from './components/IncidentListPanel';
 import { CameraLightboxModal } from './components/CameraLightboxModal';
+import { MembershipModal } from './components/MembershipModal';
 import { AttributionFooter } from './components/AttributionFooter';
 
 export const App: React.FC = () => {
@@ -38,6 +40,17 @@ export const App: React.FC = () => {
   const [matchedCameras, setMatchedCameras] = useState<MatchedCamera[]>([]);
   const [corridorIncidents, setCorridorIncidents] = useState<TrafficIncident[]>([]);
 
+  // State: Membership / Subscription ($4.99/mo)
+  const [membershipTier, setMembershipTier] = useState<MembershipTier>(() => {
+    try {
+      const saved = localStorage.getItem('sbyg_membership_tier');
+      return (saved === 'pro' ? 'pro' : 'free') as MembershipTier;
+    } catch {
+      return 'free';
+    }
+  });
+  const [isMembershipModalOpen, setIsMembershipModalOpen] = useState(false);
+
   // State: UI & Interaction
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
@@ -45,6 +58,24 @@ export const App: React.FC = () => {
   const [selectedCameraId, setSelectedCameraId] = useState<string | null>(null);
   const [lightboxCamera, setLightboxCamera] = useState<MatchedCamera | null>(null);
   const [showAllCamerasOnMap, setShowAllCamerasOnMap] = useState(false);
+
+  const handleUpgradeToPro = () => {
+    setMembershipTier('pro');
+    try {
+      localStorage.setItem('sbyg_membership_tier', 'pro');
+    } catch (e) {
+      console.warn('LocalStorage error:', e);
+    }
+  };
+
+  const handleCancelSubscription = () => {
+    setMembershipTier('free');
+    try {
+      localStorage.setItem('sbyg_membership_tier', 'free');
+    } catch (e) {
+      console.warn('LocalStorage error:', e);
+    }
+  };
 
   // 1. Fetch live traffic data (Cameras & Incidents)
   const refreshTrafficData = useCallback(async () => {
@@ -131,20 +162,22 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-100/70 text-slate-900 flex flex-col font-sans">
-      {/* App Header */}
+      {/* App Header with Pro Membership Status */}
       <Header
         cameraCount={allCameras.length}
         lastUpdated={lastUpdated}
         isLoading={isLoadingData}
         onRefresh={refreshTrafficData}
+        membershipTier={membershipTier}
+        onOpenMembership={() => setIsMembershipModalOpen(true)}
       />
 
       {/* Main Content Dashboard */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* Top Section: 2-Column Split (Left: Input & Summary, Right: Map Panel) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left Column (5 cols): Journey Inputs & Route Stats */}
-          <div className="lg:col-span-5 space-y-6">
+        {/* Row 1: Side-by-side Top Windows (Plan Singapore Journey [Left] & Map [Right]) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+          {/* Window 1: Plan Singapore Journey Panel */}
+          <div className="lg:col-span-5 flex flex-col">
             <JourneyInputPanel
               startLocation={startLocation}
               endLocation={endLocation}
@@ -156,18 +189,10 @@ export const App: React.FC = () => {
               onPlanTrip={handlePlanTrip}
               isCalculating={isCalculatingRoute}
             />
-
-            {route && (
-              <RouteSummaryCard
-                route={route}
-                matchedCameras={matchedCameras}
-                incidents={corridorIncidents}
-              />
-            )}
           </div>
 
-          {/* Right Column (7 cols): Interactive Corridor Map */}
-          <div className="lg:col-span-7">
+          {/* Window 2: Map Window (Next to Plan Singapore Journey) */}
+          <div className="lg:col-span-7 flex flex-col min-h-[460px]">
             {route ? (
               <MapPanel
                 route={route}
@@ -180,7 +205,7 @@ export const App: React.FC = () => {
                 onToggleShowAllCameras={() => setShowAllCamerasOnMap(!showAllCamerasOnMap)}
               />
             ) : (
-              <div className="bg-white rounded-2xl p-12 text-center border border-slate-200 shadow-sm h-[480px] flex flex-col items-center justify-center">
+              <div className="bg-white rounded-2xl p-12 text-center border border-slate-200 shadow-sm h-full flex flex-col items-center justify-center">
                 <div className="w-8 h-8 border-3 border-sky-600 border-t-transparent rounded-full animate-spin mb-3" />
                 <p className="text-sm font-medium text-slate-600">
                   Calculating Singapore route corridor & loading traffic cameras...
@@ -190,17 +215,30 @@ export const App: React.FC = () => {
           </div>
         </div>
 
-        {/* Middle Section: Camera Gallery Panel */}
+        {/* Row 2: Route Summary horizontally below the 2 windows */}
+        {route && (
+          <RouteSummaryCard
+            route={route}
+            matchedCameras={matchedCameras}
+            incidents={corridorIncidents}
+            membershipTier={membershipTier}
+            onOpenMembership={() => setIsMembershipModalOpen(true)}
+          />
+        )}
+
+        {/* Row 3: Camera View below Route Summary (up to 6 cameras depending on jam along the journey) */}
         {matchedCameras.length > 0 && (
           <CameraGalleryPanel
             matchedCameras={matchedCameras}
             selectedCameraId={selectedCameraId}
+            membershipTier={membershipTier}
             onSelectCamera={handleSelectCamera}
             onOpenLightbox={(cam) => setLightboxCamera(cam)}
+            onOpenMembership={() => setIsMembershipModalOpen(true)}
           />
         )}
 
-        {/* Bottom Section: Real-time Incident List */}
+        {/* Row 4: Real-time Incident List Panel */}
         <IncidentListPanel
           corridorIncidents={corridorIncidents}
           allIncidents={allIncidents}
@@ -208,6 +246,15 @@ export const App: React.FC = () => {
           onSelectCamera={handleSelectCamera}
         />
       </main>
+
+      {/* Subscription Membership Modal ($4.99/mo) */}
+      <MembershipModal
+        isOpen={isMembershipModalOpen}
+        onClose={() => setIsMembershipModalOpen(false)}
+        currentTier={membershipTier}
+        onUpgrade={handleUpgradeToPro}
+        onCancelSubscription={handleCancelSubscription}
+      />
 
       {/* Lightbox Modal */}
       {lightboxCamera && (
@@ -222,3 +269,4 @@ export const App: React.FC = () => {
     </div>
   );
 };
+

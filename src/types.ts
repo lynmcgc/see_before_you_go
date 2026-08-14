@@ -71,10 +71,20 @@ export interface CalculatedRoute {
 
 export type CameraRole = 'start' | 'end' | 'jam' | 'enroute';
 
+export type MembershipTier = 'free' | 'pro';
+
+export interface MembershipState {
+  tier: MembershipTier;
+  priceMonthly: number;
+  activeSince?: string;
+  isAutoRenew: boolean;
+}
+
 export interface MatchedCamera {
   camera: TrafficCamera;
   role: CameraRole;
   distanceKm: number; // distance from point to camera
   pointLabel: string;
   relatedIncident?: TrafficIncident;
+  isFreeAccess?: boolean; // true for 'start' (home) & 'end' (destination)
 }

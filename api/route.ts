@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { getOneMapToken, decodePolyline } from './onemapClient';
 
 interface OSRMStep {
   maneuver: {
@@ -11,47 +12,138 @@ interface OSRMStep {
   duration: number;
 }
 
-interface OSRMLeg {
-  steps?: OSRMStep[];
-  distance: number;
-  duration: number;
-}
-
 interface OSRMRoute {
   geometry: {
     coordinates: [number, number][]; // [longitude, latitude]
     type: string;
   };
-  legs: OSRMLeg[];
+  legs: Array<{
+    steps?: OSRMStep[];
+    distance: number;
+    duration: number;
+  }>;
   distance: number;
   duration: number;
 }
 
 export async function handleRoute(req: Request, res: Response) {
   try {
-    const { startLat, startLng, endLat, endLng, mode } = req.query;
+    const { startLat, startLng, endLat, endLng, mode, routeType, start, end } = req.query;
 
-    if (!startLat || !startLng || !endLat || !endLng) {
-      return res.status(400).json({ error: 'Missing start or end coordinates' });
+    let sLat: number;
+    let sLng: number;
+    let eLat: number;
+    let eLng: number;
+
+    if (start && end) {
+      const [stLatStr, stLngStr] = String(start).split(',');
+      const [edLatStr, edLngStr] = String(end).split(',');
+      sLat = parseFloat(stLatStr);
+      sLng = parseFloat(stLngStr);
+      eLat = parseFloat(edLatStr);
+      eLng = parseFloat(edLngStr);
+    } else {
+      if (!startLat || !startLng || !endLat || !endLng) {
+        return res.status(400).json({ error: 'Missing start or end coordinates' });
+      }
+      sLat = parseFloat(startLat as string);
+      sLng = parseFloat(startLng as string);
+      eLat = parseFloat(endLat as string);
+      eLng = parseFloat(endLng as string);
     }
 
-    const sLat = parseFloat(startLat as string);
-    const sLng = parseFloat(startLng as string);
-    const eLat = parseFloat(endLat as string);
-    const eLng = parseFloat(endLng as string);
-    const travelMode = (mode as string) || 'driving';
+    // Map travel mode / routeType: 'drive' | 'walk' | 'cycle' | 'pt' | 'transit'
+    const rawMode = (routeType as string) || (mode as string) || 'driving';
+    let oneMapRouteType = 'drive';
+    if (rawMode === 'walking' || rawMode === 'walk') {
+      oneMapRouteType = 'walk';
+    } else if (rawMode === 'cycling' || rawMode === 'cycle') {
+      oneMapRouteType = 'cycle';
+    } else if (rawMode === 'transit' || rawMode === 'pt') {
+      oneMapRouteType = 'pt';
+    } else {
+      oneMapRouteType = 'drive';
+    }
 
-    // Map travel mode to OSRM profile
-    // OSRM supports: 'car' (driving), 'foot' (walking), 'bike' (cycling)
+    // 1. Try OneMap Routing Service with token if available
+    const token = await getOneMapToken();
+    if (token) {
+      try {
+        const oneMapUrl = `https://www.onemap.gov.sg/api/public/routingsvc/route?start=${sLat},${sLng}&end=${eLat},${eLng}&routeType=${oneMapRouteType}`;
+        const omHeaders = {
+          Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}`,
+          Accept: 'application/json',
+        };
+
+        const omRes = await fetch(oneMapUrl, { headers: omHeaders });
+        if (omRes.ok) {
+          const omData = await omRes.json();
+
+          // Handle standard drive / walk / cycle response
+          if (omData.route_geometry) {
+            const polyline = decodePolyline(omData.route_geometry);
+            const totalDistanceM = omData.route_summary?.total_distance || 0;
+            const totalTimeS = omData.route_summary?.total_time || 0;
+
+            const steps: Array<{
+              instruction: string;
+              distanceKm: number;
+              durationMin: number;
+              roadName: string;
+              mode: string;
+            }> = [];
+
+            if (Array.isArray(omData.route_instructions)) {
+              omData.route_instructions.forEach((inst: any) => {
+                const instructionText = Array.isArray(inst) ? inst[1] : (inst.instruction || '');
+                const stepDistM = Array.isArray(inst) ? parseFloat(inst[2]) || 0 : (inst.distance || 0);
+                const stepTimeS = Array.isArray(inst) ? parseFloat(inst[3]) || 0 : (inst.time || 0);
+
+                if (instructionText) {
+                  steps.push({
+                    instruction: instructionText,
+                    distanceKm: +(stepDistM / 1000).toFixed(2),
+                    durationMin: Math.max(1, Math.round(stepTimeS / 60)),
+                    roadName: instructionText.split(' onto ')[1] || 'Corridor Link',
+                    mode: rawMode,
+                  });
+                }
+              });
+            }
+
+            return res.json({
+              success: true,
+              source: 'onemap',
+              polyline,
+              distanceKm: +(totalDistanceM / 1000).toFixed(1),
+              durationMin: Math.max(1, Math.round(totalTimeS / 60)),
+              steps: steps.slice(0, 10),
+              rawSummary: omData.route_summary,
+            });
+          } else if (omData.plan) {
+            // Public transport plan
+            return res.json({
+              success: true,
+              source: 'onemap_pt',
+              plan: omData.plan,
+            });
+          }
+        }
+      } catch (omErr) {
+        console.warn('OneMap routing attempt error, falling back to OSRM:', omErr);
+      }
+    }
+
+    // 2. Fallback / Primary OSRM Engine
     let osrmProfile = 'car';
-    if (travelMode === 'walking') {
+    if (rawMode === 'walking' || rawMode === 'walk') {
       osrmProfile = 'foot';
-    } else if (travelMode === 'transit') {
-      // Transit will use road routing with transit-paced duration estimation
+    } else if (rawMode === 'cycling' || rawMode === 'cycle') {
+      osrmProfile = 'bike';
+    } else if (rawMode === 'transit' || rawMode === 'pt') {
       osrmProfile = 'car';
     }
 
-    // 1. Query OSRM routing engine with full geometry and turn steps
     const osrmUrl = `https://router.project-osrm.org/route/v1/${osrmProfile}/${sLng},${sLat};${eLng},${eLat}?overview=full&geometries=geojson&steps=true`;
 
     const upstream = await fetch(osrmUrl, {
@@ -67,7 +159,6 @@ export async function handleRoute(req: Request, res: Response) {
       if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
         const route: OSRMRoute = data.routes[0];
 
-        // OSRM coordinates are [lng, lat], convert to Leaflet standard [lat, lng]
         const polyline: [number, number][] = route.geometry.coordinates.map(
           (coord) => [coord[1], coord[0]]
         );
@@ -75,12 +166,10 @@ export async function handleRoute(req: Request, res: Response) {
         const distanceKm = +(route.distance / 1000).toFixed(1);
         let durationMin = Math.round(route.duration / 60);
 
-        if (travelMode === 'transit') {
-          // Adjust transit duration for waiting and boarding
+        if (rawMode === 'transit' || rawMode === 'pt') {
           durationMin = Math.round(durationMin * 1.3) + 6;
         }
 
-        // Format turn-by-turn steps
         const steps: Array<{
           instruction: string;
           distanceKm: number;
@@ -102,14 +191,13 @@ export async function handleRoute(req: Request, res: Response) {
               instruction = `${type}${modifier} onto ${road}`;
             }
 
-            // Only add substantial steps
             if (st.distance > 10 || steps.length === 0) {
               steps.push({
                 instruction,
                 distanceKm: stepDistKm,
                 durationMin: stepDurMin,
                 roadName: road,
-                mode: travelMode,
+                mode: rawMode,
               });
             }
           });
@@ -117,6 +205,7 @@ export async function handleRoute(req: Request, res: Response) {
 
         return res.json({
           success: true,
+          source: 'osrm',
           polyline,
           distanceKm,
           durationMin: Math.max(2, durationMin),
@@ -125,7 +214,6 @@ export async function handleRoute(req: Request, res: Response) {
       }
     }
 
-    // Fallback: If external router is temporarily unreachable, return structured notification
     return res.status(502).json({ error: 'Routing engine service unavailable' });
   } catch (error: any) {
     console.error('Error in /api/route:', error);

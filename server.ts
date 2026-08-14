@@ -6,6 +6,8 @@ import { handleTrafficCameras } from './api/trafficCameras';
 import { handleTrafficIncidents } from './api/trafficIncidents';
 import { handleSearchLocations } from './api/searchLocations';
 import { handleRoute } from './api/route';
+import { handleRevGeocode } from './api/revGeocode';
+import { handleOneMapToken } from './api/onemapToken';
 
 dotenv.config();
 
@@ -20,10 +22,22 @@ async function startServer() {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
+  // Traffic Data feeds (LTA DataMall & data.gov.sg)
   app.get('/api/traffic-cameras', handleTrafficCameras);
   app.get('/api/traffic-incidents', handleTrafficIncidents);
+
+  // OneMap Backend Logic (Auth Token, Search/Geocode, RevGeocode, Routing)
+  app.post('/api/onemap/token', handleOneMapToken);
+  app.get('/api/onemap/token', handleOneMapToken);
+
   app.get('/api/search-locations', handleSearchLocations);
+  app.get('/api/onemap/search', handleSearchLocations);
+
+  app.get('/api/revgeocode', handleRevGeocode);
+  app.get('/api/onemap/revgeocode', handleRevGeocode);
+
   app.get('/api/route', handleRoute);
+  app.get('/api/onemap/route', handleRoute);
 
   // Vite middleware in dev or static files in production
   if (process.env.NODE_ENV !== 'production') {

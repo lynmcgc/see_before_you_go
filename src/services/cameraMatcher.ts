@@ -104,6 +104,9 @@ export function detectCorridorIncidents(
 
 /**
  * Matches start, end, and detected corridor jam/incident points to their closest traffic cameras
+ * Start (Home) and End (Destination) are tagged as free access.
+ * En-route and Jam points are tagged as Pro subscription feeds ($4.99/mo).
+ * Returns up to 6 total matched cameras.
  */
 export function matchCamerasToRoute(
   route: CalculatedRoute,
@@ -113,7 +116,7 @@ export function matchCamerasToRoute(
   const matched: MatchedCamera[] = [];
   const addedCameraIds = new Set<string>();
 
-  // 1. Match Start Location Camera
+  // 1. Match Start Location Camera (Home/Origin - FREE)
   const startMatch = findNearestCamera(route.startLocation, cameras);
   if (startMatch) {
     matched.push({
@@ -121,43 +124,48 @@ export function matchCamerasToRoute(
       role: 'start',
       distanceKm: startMatch.distanceKm,
       pointLabel: `Origin: ${route.startLocation.name}`,
+      isFreeAccess: true,
     });
     addedCameraIds.add(startMatch.camera.cameraId);
   }
 
-  // 2. Match Jam / Incident Points along corridor
+  // 2. Match Jam / Incident Points along corridor (PRO)
   const corridorIncidents = detectCorridorIncidents(route, incidents);
+  const jamCameras: MatchedCamera[] = [];
   for (const incident of corridorIncidents) {
     const jamMatch = findNearestCamera(
       { latitude: incident.latitude, longitude: incident.longitude },
       cameras
     );
 
-    if (jamMatch) {
-      // Avoid duplicate camera cards if same camera covers it
-      if (!addedCameraIds.has(jamMatch.camera.cameraId)) {
-        matched.push({
-          camera: jamMatch.camera,
-          role: 'jam',
-          distanceKm: jamMatch.distanceKm,
-          pointLabel: `Jam Alert: ${incident.type} on ${incident.roadName}`,
-          relatedIncident: incident,
-        });
-        addedCameraIds.add(jamMatch.camera.cameraId);
-      }
+    if (jamMatch && !addedCameraIds.has(jamMatch.camera.cameraId)) {
+      jamCameras.push({
+        camera: jamMatch.camera,
+        role: 'jam',
+        distanceKm: jamMatch.distanceKm,
+        pointLabel: `Jam Alert: ${incident.type} on ${incident.roadName}`,
+        relatedIncident: incident,
+        isFreeAccess: false,
+      });
+      addedCameraIds.add(jamMatch.camera.cameraId);
     }
   }
 
-  // 3. Match En-route Expressway Cameras along the route polyline (midpoints if long route)
-  if (route.polyline.length > 5) {
+  // Add up to 2-3 jam cameras
+  matched.push(...jamCameras.slice(0, 3));
+
+  // 3. Match En-route Expressway Cameras along the route polyline (PRO)
+  if (route.polyline.length > 4) {
     // Check intermediate sample points along the route
-    const sampleStep = Math.max(1, Math.floor(route.polyline.length / 4));
+    const sampleStep = Math.max(1, Math.floor(route.polyline.length / 5));
     for (let i = sampleStep; i < route.polyline.length - sampleStep; i += sampleStep) {
+      if (matched.length >= 5) break; // Leave room for destination
+
       const pt = route.polyline[i];
       const enrouteMatch = findNearestCamera(
         { latitude: pt[0], longitude: pt[1] },
         cameras,
-        2.0 // tight corridor for en-route expressway cameras
+        2.5 // corridor for expressway cameras
       );
 
       if (enrouteMatch && !addedCameraIds.has(enrouteMatch.camera.cameraId)) {
@@ -166,14 +174,14 @@ export function matchCamerasToRoute(
           role: 'enroute',
           distanceKm: enrouteMatch.distanceKm,
           pointLabel: `En-Route: ${enrouteMatch.camera.roadName}`,
+          isFreeAccess: false,
         });
         addedCameraIds.add(enrouteMatch.camera.cameraId);
-        if (matched.length >= 6) break; // Keep UI focused and high signal
       }
     }
   }
 
-  // 4. Match End Location Camera
+  // 4. Match End Location Camera (Destination - FREE)
   const endMatch = findNearestCamera(route.endLocation, cameras);
   if (endMatch && !addedCameraIds.has(endMatch.camera.cameraId)) {
     matched.push({
@@ -181,6 +189,7 @@ export function matchCamerasToRoute(
       role: 'end',
       distanceKm: endMatch.distanceKm,
       pointLabel: `Destination: ${route.endLocation.name}`,
+      isFreeAccess: true,
     });
     addedCameraIds.add(endMatch.camera.cameraId);
   } else if (endMatch && addedCameraIds.has(endMatch.camera.cameraId)) {
@@ -188,8 +197,11 @@ export function matchCamerasToRoute(
     const existing = matched.find((m) => m.camera.cameraId === endMatch.camera.cameraId);
     if (existing && existing.role === 'start') {
       existing.pointLabel = `Origin & Destination: ${route.startLocation.name}`;
+      existing.isFreeAccess = true;
     }
   }
 
-  return matched;
+  // Capped at up to 6 cameras depending on the jam along the journey
+  return matched.slice(0, 6);
 }
+
