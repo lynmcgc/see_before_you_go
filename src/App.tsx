@@ -103,16 +103,49 @@ export const App: React.FC = () => {
     }
   }, [route]);
 
-  // Initial load of traffic data
+  // Initial load of traffic data & initial route calculation
   useEffect(() => {
-    refreshTrafficData();
+    let isMounted = true;
+    (async () => {
+      setIsLoadingData(true);
+      try {
+        const [cameras, incidents] = await Promise.all([
+          fetchLiveTrafficCameras(),
+          fetchLiveTrafficIncidents(),
+        ]);
+        if (!isMounted) return;
+        setAllCameras(cameras);
+        setAllIncidents(incidents);
+        setLastUpdated(new Date());
+
+        setIsCalculatingRoute(true);
+        const calculated = await calculateRoute(startLocation, endLocation, travelMode);
+        if (!isMounted) return;
+        setRoute(calculated);
+
+        const matched = matchCamerasToRoute(calculated, cameras, incidents);
+        const corridorIncs = detectCorridorIncidents(calculated, incidents);
+        setMatchedCameras(matched);
+        setCorridorIncidents(corridorIncs);
+      } catch (e) {
+        console.error('Initial load error:', e);
+      } finally {
+        if (isMounted) {
+          setIsLoadingData(false);
+          setIsCalculatingRoute(false);
+        }
+      }
+    })();
 
     // Auto-refresh every 30s for live LTA camera updates
     const interval = setInterval(() => {
       refreshTrafficData();
     }, 30000);
 
-    return () => clearInterval(interval);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   // 2. Compute Route & Match Cameras
@@ -122,25 +155,19 @@ export const App: React.FC = () => {
       const calculated = await calculateRoute(startLocation, endLocation, travelMode);
       setRoute(calculated);
 
-      if (allCameras.length > 0) {
-        const matched = matchCamerasToRoute(calculated, allCameras, allIncidents);
-        const corridorIncs = detectCorridorIncidents(calculated, allIncidents);
-        setMatchedCameras(matched);
-        setCorridorIncidents(corridorIncs);
-      }
+      const camerasToMatch = allCameras.length > 0 ? allCameras : await fetchLiveTrafficCameras();
+      const incidentsToMatch = allIncidents.length > 0 ? allIncidents : await fetchLiveTrafficIncidents();
+
+      const matched = matchCamerasToRoute(calculated, camerasToMatch, incidentsToMatch);
+      const corridorIncs = detectCorridorIncidents(calculated, incidentsToMatch);
+      setMatchedCameras(matched);
+      setCorridorIncidents(corridorIncs);
     } catch (err) {
       console.error('Failed to calculate route:', err);
     } finally {
       setIsCalculatingRoute(false);
     }
   }, [startLocation, endLocation, travelMode, allCameras, allIncidents]);
-
-  // Trigger initial route calculation on startup once cameras are fetched
-  useEffect(() => {
-    if (allCameras.length > 0 && !route) {
-      handlePlanTrip();
-    }
-  }, [allCameras, route, handlePlanTrip]);
 
   // Swap Start & Destination
   const handleSwapLocations = () => {
