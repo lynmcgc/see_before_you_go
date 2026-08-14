@@ -1,0 +1,6 @@
+{
+  "name": "See Before You Go",
+  "description": "Singapore multimodal journey planner with live LTA expressway traffic cameras and route incident detection",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
