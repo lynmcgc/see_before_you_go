@@ -197,15 +197,17 @@ export const CameraGalleryPanel: React.FC<CameraGalleryPanelProps> = ({
                   <img
                     src={item.camera.image}
                     alt={item.camera.cameraName}
+                    referrerPolicy="no-referrer"
                     className={`w-full h-full object-cover transition-transform duration-300 ${
                       isLocked ? 'blur-md scale-105 opacity-60' : 'group-hover:scale-105'
                     }`}
                     loading="lazy"
                     onError={(e) => {
-                      (e.target as HTMLElement).setAttribute(
-                        'src',
-                        `https://images.data.gov.sg/api/traffic-images/cam_${item.camera.cameraId}.jpg`
-                      );
+                      const img = e.currentTarget;
+                      if (!img.dataset.fallback) {
+                        img.dataset.fallback = 'true';
+                        img.src = `https://images.data.gov.sg/api/traffic-images/cam_${item.camera.cameraId}.jpg`;
+                      }
                     }}
                   />
 

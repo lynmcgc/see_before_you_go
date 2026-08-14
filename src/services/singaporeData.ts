@@ -143,13 +143,13 @@ export const KNOWN_LTA_CAMERAS: Omit<TrafficCamera, 'image' | 'timestamp'>[] = [
     cameraId: '2701',
     cameraName: 'Woodlands Causeway (Towards Johor)',
     roadName: 'Woodlands Checkpoint',
-    location: { latitude: 1.4485, longitude: 103.7692 }
+    location: { latitude: 1.4470, longitude: 103.7717 }
   },
   {
     cameraId: '2702',
     cameraName: 'BKE (Woodlands Flyover / Checkpoint Exit)',
     roadName: 'Bukit Timah Expressway (BKE)',
-    location: { latitude: 1.4398, longitude: 103.7712 }
+    location: { latitude: 1.4456, longitude: 103.7683 }
   },
   {
     cameraId: '2703',
@@ -161,7 +161,7 @@ export const KNOWN_LTA_CAMERAS: Omit<TrafficCamera, 'image' | 'timestamp'>[] = [
     cameraId: '2704',
     cameraName: 'BKE (Mandai Lake Flyover)',
     roadName: 'Bukit Timah Expressway (BKE)',
-    location: { latitude: 1.3986, longitude: 103.7758 }
+    location: { latitude: 1.4296, longitude: 103.7693 }
   },
   {
     cameraId: '2705',
@@ -183,9 +183,33 @@ export const KNOWN_LTA_CAMERAS: Omit<TrafficCamera, 'image' | 'timestamp'>[] = [
   },
   {
     cameraId: '4703',
-    cameraName: 'AYE (Benoi Sector Flyover)',
+    cameraName: 'Tuas Checkpoint (Departure Plaza)',
+    roadName: 'Tuas Checkpoint',
+    location: { latitude: 1.3487, longitude: 103.6350 }
+  },
+  {
+    cameraId: '4712',
+    cameraName: 'AYE (Towards Tuas Checkpoint)',
     roadName: 'Ayer Rajah Expressway (AYE)',
-    location: { latitude: 1.3175, longitude: 103.6948 }
+    location: { latitude: 1.3412, longitude: 103.6439 }
+  },
+  {
+    cameraId: '4713',
+    cameraName: 'Tuas Second Link (Arrival Corridor)',
+    roadName: 'Tuas Checkpoint',
+    location: { latitude: 1.3476, longitude: 103.6367 }
+  },
+  {
+    cameraId: '4798',
+    cameraName: 'Sentosa Gateway / Telok Blangah',
+    roadName: 'Sentosa Gateway',
+    location: { latitude: 1.2600, longitude: 103.8236 }
+  },
+  {
+    cameraId: '4799',
+    cameraName: 'HarbourFront / Keppel Road Entrance',
+    roadName: 'Telok Blangah Road',
+    location: { latitude: 1.2603, longitude: 103.8239 }
   },
   {
     cameraId: '4704',

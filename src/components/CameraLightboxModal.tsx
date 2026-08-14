@@ -56,12 +56,14 @@ export const CameraLightboxModal: React.FC<CameraLightboxModalProps> = ({
           <img
             src={camera.image}
             alt={camera.cameraName}
+            referrerPolicy="no-referrer"
             className="w-full h-auto max-h-[500px] object-contain"
             onError={(e) => {
-              (e.target as HTMLElement).setAttribute(
-                'src',
-                `https://images.data.gov.sg/api/traffic-images/cam_${camera.cameraId}.jpg`
-              );
+              const img = e.currentTarget;
+              if (!img.dataset.fallback) {
+                img.dataset.fallback = 'true';
+                img.src = `https://images.data.gov.sg/api/traffic-images/cam_${camera.cameraId}.jpg`;
+              }
             }}
           />
         </div>

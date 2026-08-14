@@ -28,7 +28,7 @@ export function calculateHaversineDistanceKm(
 export function findNearestCamera(
   point: { latitude: number; longitude: number },
   cameras: TrafficCamera[],
-  maxDistanceKm: number = 8.0 // Singapore expressway cameras are well distributed within ~5-8km
+  maxDistanceKm: number = 25.0 // Cover all Singapore regions
 ): { camera: TrafficCamera; distanceKm: number } | null {
   if (!cameras || cameras.length === 0) return null;
 
@@ -84,12 +84,12 @@ export function minDistanceToRoutePolylineKm(
 }
 
 /**
- * Identifies traffic incidents that fall within the route corridor (default < 1.5 km buffer)
+ * Identifies traffic incidents that fall within the route corridor (default < 3.0 km buffer)
  */
 export function detectCorridorIncidents(
   route: CalculatedRoute,
   incidents: TrafficIncident[],
-  corridorThresholdKm: number = 1.5
+  corridorThresholdKm: number = 3.0
 ): TrafficIncident[] {
   if (!route.polyline || route.polyline.length === 0 || !incidents) return [];
 
@@ -113,11 +113,13 @@ export function matchCamerasToRoute(
   cameras: TrafficCamera[],
   incidents: TrafficIncident[]
 ): MatchedCamera[] {
+  if (!cameras || cameras.length === 0) return [];
+
   const matched: MatchedCamera[] = [];
   const addedCameraIds = new Set<string>();
 
   // 1. Match Start Location Camera (Home/Origin - FREE)
-  const startMatch = findNearestCamera(route.startLocation, cameras);
+  const startMatch = findNearestCamera(route.startLocation, cameras, 20.0);
   if (startMatch) {
     matched.push({
       camera: startMatch.camera,
@@ -129,13 +131,35 @@ export function matchCamerasToRoute(
     addedCameraIds.add(startMatch.camera.cameraId);
   }
 
-  // 2. Match Jam / Incident Points along corridor (PRO)
-  const corridorIncidents = detectCorridorIncidents(route, incidents);
+  // 2. Match End Location Camera (Destination - FREE)
+  const endMatch = findNearestCamera(route.endLocation, cameras, 20.0);
+  if (endMatch && !addedCameraIds.has(endMatch.camera.cameraId)) {
+    matched.push({
+      camera: endMatch.camera,
+      role: 'end',
+      distanceKm: endMatch.distanceKm,
+      pointLabel: `Destination: ${route.endLocation.name}`,
+      isFreeAccess: true,
+    });
+    addedCameraIds.add(endMatch.camera.cameraId);
+  } else if (endMatch && addedCameraIds.has(endMatch.camera.cameraId)) {
+    const existing = matched.find((m) => m.camera.cameraId === endMatch.camera.cameraId);
+    if (existing && existing.role === 'start') {
+      existing.pointLabel = `Origin & Destination: ${route.startLocation.name}`;
+      existing.isFreeAccess = true;
+    }
+  }
+
+  // 3. Match Jam / Incident Points along corridor (PRO)
+  const corridorIncidents = detectCorridorIncidents(route, incidents, 4.0);
   const jamCameras: MatchedCamera[] = [];
   for (const incident of corridorIncidents) {
+    if (matched.length + jamCameras.length >= 6) break;
+
     const jamMatch = findNearestCamera(
       { latitude: incident.latitude, longitude: incident.longitude },
-      cameras
+      cameras,
+      12.0
     );
 
     if (jamMatch && !addedCameraIds.has(jamMatch.camera.cameraId)) {
@@ -150,22 +174,20 @@ export function matchCamerasToRoute(
       addedCameraIds.add(jamMatch.camera.cameraId);
     }
   }
+  matched.push(...jamCameras);
 
-  // Add up to 2-3 jam cameras
-  matched.push(...jamCameras.slice(0, 3));
-
-  // 3. Match En-route Expressway Cameras along the route polyline (PRO)
-  if (route.polyline.length > 4) {
-    // Check intermediate sample points along the route
-    const sampleStep = Math.max(1, Math.floor(route.polyline.length / 5));
-    for (let i = sampleStep; i < route.polyline.length - sampleStep; i += sampleStep) {
-      if (matched.length >= 5) break; // Leave room for destination
+  // 4. Match En-route Expressway Cameras along the route polyline (PRO)
+  if (route.polyline && route.polyline.length > 2 && matched.length < 6) {
+    const sampleCount = 6;
+    const step = Math.max(1, Math.floor(route.polyline.length / sampleCount));
+    for (let i = step; i < route.polyline.length - 1; i += step) {
+      if (matched.length >= 6) break;
 
       const pt = route.polyline[i];
       const enrouteMatch = findNearestCamera(
         { latitude: pt[0], longitude: pt[1] },
         cameras,
-        2.5 // corridor for expressway cameras
+        8.0 // corridor buffer for expressway cameras
       );
 
       if (enrouteMatch && !addedCameraIds.has(enrouteMatch.camera.cameraId)) {
@@ -181,27 +203,29 @@ export function matchCamerasToRoute(
     }
   }
 
-  // 4. Match End Location Camera (Destination - FREE)
-  const endMatch = findNearestCamera(route.endLocation, cameras);
-  if (endMatch && !addedCameraIds.has(endMatch.camera.cameraId)) {
-    matched.push({
-      camera: endMatch.camera,
-      role: 'end',
-      distanceKm: endMatch.distanceKm,
-      pointLabel: `Destination: ${route.endLocation.name}`,
-      isFreeAccess: true,
-    });
-    addedCameraIds.add(endMatch.camera.cameraId);
-  } else if (endMatch && addedCameraIds.has(endMatch.camera.cameraId)) {
-    // If start and end matched same camera (very close trip), label accordingly
-    const existing = matched.find((m) => m.camera.cameraId === endMatch.camera.cameraId);
-    if (existing && existing.role === 'start') {
-      existing.pointLabel = `Origin & Destination: ${route.startLocation.name}`;
-      existing.isFreeAccess = true;
+  // 5. If fewer than 2 cameras matched (e.g. short localized journey), fill remaining slots with closest cameras
+  if (matched.length < 2 && cameras.length > 0) {
+    for (const cam of cameras) {
+      if (matched.length >= 4) break;
+      if (!addedCameraIds.has(cam.cameraId)) {
+        const dist = calculateHaversineDistanceKm(
+          route.startLocation.latitude,
+          route.startLocation.longitude,
+          cam.location.latitude,
+          cam.location.longitude
+        );
+        matched.push({
+          camera: cam,
+          role: 'enroute',
+          distanceKm: parseFloat(dist.toFixed(2)),
+          pointLabel: `Corridor: ${cam.roadName}`,
+          isFreeAccess: false,
+        });
+        addedCameraIds.add(cam.cameraId);
+      }
     }
   }
 
-  // Capped at up to 6 cameras depending on the jam along the journey
   return matched.slice(0, 6);
 }
 
