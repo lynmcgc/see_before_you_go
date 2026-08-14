@@ -5,6 +5,7 @@ import { createServer as createViteServer } from 'vite';
 import { handleTrafficCameras } from './api/trafficCameras';
 import { handleTrafficIncidents } from './api/trafficIncidents';
 import { handleSearchLocations } from './api/searchLocations';
+import { handleRoute } from './api/route';
 
 dotenv.config();
 
@@ -22,6 +23,7 @@ async function startServer() {
   app.get('/api/traffic-cameras', handleTrafficCameras);
   app.get('/api/traffic-incidents', handleTrafficIncidents);
   app.get('/api/search-locations', handleSearchLocations);
+  app.get('/api/route', handleRoute);
 
   // Vite middleware in dev or static files in production
   if (process.env.NODE_ENV !== 'production') {
