@@ -1,44 +1,73 @@
 import { Request, Response } from 'express';
 
+const DEFAULT_LTA_ACCOUNT_KEY = 'QofEdWTaR1SP5iHOF5zgjA==';
+
 export async function handleTrafficCameras(req: Request, res: Response) {
   try {
-    const dateTime = req.query.date_time as string | undefined;
+    const accountKey =
+      process.env.LTA_DATAMALL_ACCOUNT_KEY ||
+      process.env.LTA_DATAMALL_KEY ||
+      DEFAULT_LTA_ACCOUNT_KEY;
 
-    // Read API key from server environment if configured
-    const apiKey =
-      process.env.DATA_GOV_SG_API_KEY ||
-      process.env.DATAGOV_API_KEY ||
-      process.env.X_API_KEY ||
-      process.env.LTA_DATAMALL_KEY;
+    // 1. Primary: LTA DataMall Traffic-Imagesv2
+    try {
+      const ltaRes = await fetch(
+        'https://datamall2.mytransport.sg/ltaodataservice/Traffic-Imagesv2',
+        {
+          headers: {
+            AccountKey: accountKey,
+            accept: 'application/json',
+          },
+        }
+      );
 
-    const headers: Record<string, string> = {
-      Accept: 'application/json',
-    };
+      if (ltaRes.ok) {
+        const ltaData = await ltaRes.json();
+        if (ltaData.value && Array.isArray(ltaData.value) && ltaData.value.length > 0) {
+          // Normalize to both OData format and standard items format for full client compatibility
+          const normalizedCameras = ltaData.value.map((c: any) => ({
+            camera_id: String(c.CameraID),
+            image: c.ImageLink,
+            location: {
+              latitude: Number(c.Latitude),
+              longitude: Number(c.Longitude),
+            },
+            timestamp: new Date().toISOString(),
+          }));
 
-    if (apiKey && apiKey.trim()) {
-      headers['x-api-key'] = apiKey.trim();
+          return res.json({
+            'odata.metadata': ltaData['odata.metadata'] || 'https://datamall2.mytransport.sg/ltaodataservice/$metadata#Traffic-Imagesv2',
+            value: ltaData.value,
+            items: [
+              {
+                timestamp: new Date().toISOString(),
+                cameras: normalizedCameras,
+              },
+            ],
+            api_info: { status: 'healthy', source: 'LTA_DATAMALL_V2' },
+          });
+        }
+      }
+    } catch (ltaErr) {
+      console.warn('LTA DataMall v2 fetch failed, falling back to data.gov.sg:', ltaErr);
     }
 
-    let url = 'https://api.data.gov.sg/v1/transport/traffic-images';
-    if (dateTime && dateTime.trim()) {
-      url += `?date_time=${encodeURIComponent(dateTime.trim())}`;
+    // 2. Secondary fallback: Data.gov.sg v1
+    const dataGovRes = await fetch(
+      'https://api.data.gov.sg/v1/transport/traffic-images',
+      {
+        headers: { Accept: 'application/json' },
+      }
+    );
+
+    if (dataGovRes.ok) {
+      const dataGovData = await dataGovRes.json();
+      return res.json(dataGovData);
     }
 
-    const upstreamRes = await fetch(url, {
-      headers,
-    });
-
-    if (!upstreamRes.ok) {
-      return res.status(upstreamRes.status).json({
-        error: `Upstream traffic images service returned status ${upstreamRes.status}`,
-      });
-    }
-
-    const data = await upstreamRes.json();
-    return res.json(data);
+    return res.status(502).json({ error: 'Failed to retrieve traffic camera feeds from upstream' });
   } catch (error: any) {
-    console.error('Error in /api/traffic-cameras:', error);
-    return res.status(500).json({ error: 'Failed to fetch traffic cameras' });
+    console.error('Error in /api/traffic-cameras handler:', error);
+    return res.status(500).json({ error: 'Internal error fetching traffic cameras' });
   }
 }
-

@@ -101,254 +101,114 @@ export const SINGAPORE_PRESET_LOCATIONS: LocationPoint[] = [
   }
 ];
 
-// Reference known LTA Traffic Cameras with coordinates and human readable road names
+// Complete reference of LTA Traffic Cameras mapped from DataMall Traffic-Imagesv2
 export const KNOWN_LTA_CAMERAS: Omit<TrafficCamera, 'image' | 'timestamp'>[] = [
-  {
-    cameraId: '1701',
-    cameraName: 'CTE (Moulmein Flyover)',
-    roadName: 'Central Expressway (CTE)',
-    location: { latitude: 1.3188, longitude: 103.8533 }
-  },
-  {
-    cameraId: '1702',
-    cameraName: 'CTE (Braddell Flyover)',
-    roadName: 'Central Expressway (CTE)',
-    location: { latitude: 1.3432, longitude: 103.8573 }
-  },
-  {
-    cameraId: '1703',
-    cameraName: 'CTE (Ang Mo Kio Ave 5 Flyover)',
-    roadName: 'Central Expressway (CTE)',
-    location: { latitude: 1.3789, longitude: 103.8576 }
-  },
-  {
-    cameraId: '1704',
-    cameraName: 'CTE (Bukit Timah Rd Entrance)',
-    roadName: 'Central Expressway (CTE)',
-    location: { latitude: 1.3115, longitude: 103.8458 }
-  },
-  {
-    cameraId: '1705',
-    cameraName: 'CTE (Buyong Road / Orchard)',
-    roadName: 'Central Expressway (CTE)',
-    location: { latitude: 1.3012, longitude: 103.8423 }
-  },
-  {
-    cameraId: '1706',
-    cameraName: 'CTE (Yio Chu Kang Flyover)',
-    roadName: 'Central Expressway (CTE)',
-    location: { latitude: 1.3932, longitude: 103.8642 }
-  },
-  {
-    cameraId: '2701',
-    cameraName: 'Woodlands Causeway (Towards Johor)',
-    roadName: 'Woodlands Checkpoint',
-    location: { latitude: 1.4470, longitude: 103.7717 }
-  },
-  {
-    cameraId: '2702',
-    cameraName: 'BKE (Woodlands Flyover / Checkpoint Exit)',
-    roadName: 'Bukit Timah Expressway (BKE)',
-    location: { latitude: 1.4456, longitude: 103.7683 }
-  },
-  {
-    cameraId: '2703',
-    cameraName: 'BKE (Turf Club Flyover)',
-    roadName: 'Bukit Timah Expressway (BKE)',
-    location: { latitude: 1.4253, longitude: 103.7645 }
-  },
-  {
-    cameraId: '2704',
-    cameraName: 'BKE (Mandai Lake Flyover)',
-    roadName: 'Bukit Timah Expressway (BKE)',
-    location: { latitude: 1.4296, longitude: 103.7693 }
-  },
-  {
-    cameraId: '2705',
-    cameraName: 'BKE (Dairy Farm Flyover)',
-    roadName: 'Bukit Timah Expressway (BKE)',
-    location: { latitude: 1.3654, longitude: 103.7752 }
-  },
-  {
-    cameraId: '4701',
-    cameraName: 'Tuas Second Link (Towards Malaysia)',
-    roadName: 'Tuas Checkpoint',
-    location: { latitude: 1.3496, longitude: 103.6334 }
-  },
-  {
-    cameraId: '4702',
-    cameraName: 'AYE (Tuas West Drive Flyover)',
-    roadName: 'Ayer Rajah Expressway (AYE)',
-    location: { latitude: 1.3326, longitude: 103.6425 }
-  },
-  {
-    cameraId: '4703',
-    cameraName: 'Tuas Checkpoint (Departure Plaza)',
-    roadName: 'Tuas Checkpoint',
-    location: { latitude: 1.3487, longitude: 103.6350 }
-  },
-  {
-    cameraId: '4712',
-    cameraName: 'AYE (Towards Tuas Checkpoint)',
-    roadName: 'Ayer Rajah Expressway (AYE)',
-    location: { latitude: 1.3412, longitude: 103.6439 }
-  },
-  {
-    cameraId: '4713',
-    cameraName: 'Tuas Second Link (Arrival Corridor)',
-    roadName: 'Tuas Checkpoint',
-    location: { latitude: 1.3476, longitude: 103.6367 }
-  },
-  {
-    cameraId: '4798',
-    cameraName: 'Sentosa Gateway / Telok Blangah',
-    roadName: 'Sentosa Gateway',
-    location: { latitude: 1.2600, longitude: 103.8236 }
-  },
-  {
-    cameraId: '4799',
-    cameraName: 'HarbourFront / Keppel Road Entrance',
-    roadName: 'Telok Blangah Road',
-    location: { latitude: 1.2603, longitude: 103.8239 }
-  },
-  {
-    cameraId: '4704',
-    cameraName: 'AYE (Jurong Town Hall Flyover)',
-    roadName: 'Ayer Rajah Expressway (AYE)',
-    location: { latitude: 1.3218, longitude: 103.7431 }
-  },
-  {
-    cameraId: '4705',
-    cameraName: 'AYE (Clementi Flyover)',
-    roadName: 'Ayer Rajah Expressway (AYE)',
-    location: { latitude: 1.3112, longitude: 103.7634 }
-  },
-  {
-    cameraId: '4706',
-    cameraName: 'AYE (Buona Vista Flyover)',
-    roadName: 'Ayer Rajah Expressway (AYE)',
-    location: { latitude: 1.2981, longitude: 103.7885 }
-  },
-  {
-    cameraId: '4707',
-    cameraName: 'AYE (Keppel Viaduct / VivoCity)',
-    roadName: 'Ayer Rajah Expressway (AYE)',
-    location: { latitude: 1.2721, longitude: 103.8248 }
-  },
-  {
-    cameraId: '5701',
-    cameraName: 'PIE (Jalan Anak Bukit Flyover)',
-    roadName: 'Pan Island Expressway (PIE)',
-    location: { latitude: 1.3429, longitude: 103.7745 }
-  },
-  {
-    cameraId: '5702',
-    cameraName: 'PIE (Eng Neo Flyover)',
-    roadName: 'Pan Island Expressway (PIE)',
-    location: { latitude: 1.3346, longitude: 103.7994 }
-  },
-  {
-    cameraId: '5703',
-    cameraName: 'PIE (Whampoa Flyover)',
-    roadName: 'Pan Island Expressway (PIE)',
-    location: { latitude: 1.3275, longitude: 103.8562 }
-  },
-  {
-    cameraId: '5704',
-    cameraName: 'PIE (Woodsville Flyover / Kallang Way)',
-    roadName: 'Pan Island Expressway (PIE)',
-    location: { latitude: 1.3262, longitude: 103.8741 }
-  },
-  {
-    cameraId: '5705',
-    cameraName: 'PIE (Paya Lebar Flyover)',
-    roadName: 'Pan Island Expressway (PIE)',
-    location: { latitude: 1.3321, longitude: 103.8935 }
-  },
-  {
-    cameraId: '5706',
-    cameraName: 'PIE (Bedok North Flyover)',
-    roadName: 'Pan Island Expressway (PIE)',
-    location: { latitude: 1.3392, longitude: 103.9214 }
-  },
-  {
-    cameraId: '5707',
-    cameraName: 'PIE (Tampines Flyover)',
-    roadName: 'Pan Island Expressway (PIE)',
-    location: { latitude: 1.3498, longitude: 103.9482 }
-  },
-  {
-    cameraId: '5708',
-    cameraName: 'PIE (Changi Airport Flyover)',
-    roadName: 'Pan Island Expressway (PIE)',
-    location: { latitude: 1.3592, longitude: 103.9785 }
-  },
-  {
-    cameraId: '6701',
-    cameraName: 'ECP (Benjamin Sheares Bridge)',
-    roadName: 'East Coast Parkway (ECP)',
-    location: { latitude: 1.2915, longitude: 103.8614 }
-  },
-  {
-    cameraId: '6702',
-    cameraName: 'ECP (Tanjong Rhu / Fort Road Flyover)',
-    roadName: 'East Coast Parkway (ECP)',
-    location: { latitude: 1.2982, longitude: 103.8821 }
-  },
-  {
-    cameraId: '6703',
-    cameraName: 'ECP (Marine Parade Flyover)',
-    roadName: 'East Coast Parkway (ECP)',
-    location: { latitude: 1.3025, longitude: 103.9142 }
-  },
-  {
-    cameraId: '6704',
-    cameraName: 'ECP (Laguna Flyover / Bedok)',
-    roadName: 'East Coast Parkway (ECP)',
-    location: { latitude: 1.3142, longitude: 103.9456 }
-  },
-  {
-    cameraId: '6705',
-    cameraName: 'ECP (Changi Coast Road / Airport Entrance)',
-    roadName: 'East Coast Parkway (ECP)',
-    location: { latitude: 1.3498, longitude: 103.9852 }
-  },
-  {
-    cameraId: '7701',
-    cameraName: 'SLE (Lentor Flyover)',
-    roadName: 'Seletar Expressway (SLE)',
-    location: { latitude: 1.3962, longitude: 103.8345 }
-  },
-  {
-    cameraId: '7702',
-    cameraName: 'SLE (Upper Thomson Flyover)',
-    roadName: 'Seletar Expressway (SLE)',
-    location: { latitude: 1.4082, longitude: 103.8115 }
-  },
-  {
-    cameraId: '8701',
-    cameraName: 'TPE (Punggol Flyover)',
-    roadName: 'Tampines Expressway (TPE)',
-    location: { latitude: 1.3942, longitude: 103.9145 }
-  },
-  {
-    cameraId: '8702',
-    cameraName: 'TPE (Seletar Aerospace Flyover)',
-    roadName: 'Tampines Expressway (TPE)',
-    location: { latitude: 1.4085, longitude: 103.8742 }
-  },
-  {
-    cameraId: '9701',
-    cameraName: 'MCE (Marina Boulevard / Central Blvd)',
-    roadName: 'Marina Coastal Expressway (MCE)',
-    location: { latitude: 1.2755, longitude: 103.8568 }
-  },
-  {
-    cameraId: '9702',
-    cameraName: 'KPE (Kallang Bahru Tunnel Entrance)',
-    roadName: 'Kallang-Paya Lebar Expressway (KPE)',
-    location: { latitude: 1.3154, longitude: 103.8725 }
-  }
+  // KPE (1001 - 1006)
+  { cameraId: '1001', cameraName: 'KPE (Kallang Bahru / Airport Flyover)', roadName: 'Kallang-Paya Lebar Expressway (KPE)', location: { latitude: 1.29531332, longitude: 103.871146 } },
+  { cameraId: '1002', cameraName: 'KPE (PIE / Kallang River Exit)', roadName: 'Kallang-Paya Lebar Expressway (KPE)', location: { latitude: 1.319541067, longitude: 103.8785627 } },
+  { cameraId: '1003', cameraName: 'KPE (Aljunied Road)', roadName: 'Kallang-Paya Lebar Expressway (KPE)', location: { latitude: 1.323957439, longitude: 103.8728576 } },
+  { cameraId: '1004', cameraName: 'KPE (Geylang Road)', roadName: 'Kallang-Paya Lebar Expressway (KPE)', location: { latitude: 1.319535712, longitude: 103.8750668 } },
+  { cameraId: '1005', cameraName: 'KPE (Defu Flyover / Hougang)', roadName: 'Kallang-Paya Lebar Expressway (KPE)', location: { latitude: 1.363519886, longitude: 103.905394 } },
+  { cameraId: '1006', cameraName: 'KPE (Tampines Road Entrance)', roadName: 'Kallang-Paya Lebar Expressway (KPE)', location: { latitude: 1.357098686, longitude: 103.902042 } },
+
+  // MCE (1501 - 1505)
+  { cameraId: '1501', cameraName: 'MCE (Marina Coastal Expressway / Marina Bay)', roadName: 'Marina Coastal Expressway (MCE)', location: { latitude: 1.27414394350065, longitude: 103.851316802547 } },
+  { cameraId: '1502', cameraName: 'MCE (Marina South Viaduct)', roadName: 'Marina Coastal Expressway (MCE)', location: { latitude: 1.27135090682664, longitude: 103.861828440597 } },
+  { cameraId: '1503', cameraName: 'MCE (Marina Boulevard Entrance)', roadName: 'Marina Coastal Expressway (MCE)', location: { latitude: 1.27066408655104, longitude: 103.856977943394 } },
+  { cameraId: '1504', cameraName: 'MCE / ECP (Benjamin Sheares Bridge)', roadName: 'Marina Coastal Expressway (MCE)', location: { latitude: 1.29409891409364, longitude: 103.876056196568 } },
+  { cameraId: '1505', cameraName: 'MCE (Marina East Tunnel)', roadName: 'Marina Coastal Expressway (MCE)', location: { latitude: 1.2752977149006, longitude: 103.866390381759 } },
+
+  // CTE (1701 - 1711)
+  { cameraId: '1701', cameraName: 'CTE (Moulmein Flyover)', roadName: 'Central Expressway (CTE)', location: { latitude: 1.323604823, longitude: 103.8587802 } },
+  { cameraId: '1702', cameraName: 'CTE (Braddell Flyover)', roadName: 'Central Expressway (CTE)', location: { latitude: 1.34355015, longitude: 103.8601984 } },
+  { cameraId: '1703', cameraName: 'CTE (Whampoa Flyover)', roadName: 'Central Expressway (CTE)', location: { latitude: 1.32814722194857, longitude: 103.862203282048 } },
+  { cameraId: '1704', cameraName: 'CTE (Havelock Road / Chin Swee)', roadName: 'Central Expressway (CTE)', location: { latitude: 1.28569398886979, longitude: 103.837524510188 } },
+  { cameraId: '1705', cameraName: 'CTE (Ang Mo Kio Ave 5 Flyover)', roadName: 'Central Expressway (CTE)', location: { latitude: 1.375925022, longitude: 103.8587986 } },
+  { cameraId: '1706', cameraName: 'CTE (Yio Chu Kang Flyover)', roadName: 'Central Expressway (CTE)', location: { latitude: 1.38861, longitude: 103.85806 } },
+  { cameraId: '1707', cameraName: 'CTE (Outram Road Tunnel Entrance)', roadName: 'Central Expressway (CTE)', location: { latitude: 1.28036584335876, longitude: 103.830451146503 } },
+  { cameraId: '1709', cameraName: 'CTE (Cairnhill / Bukit Timah Road)', roadName: 'Central Expressway (CTE)', location: { latitude: 1.31384231654635, longitude: 103.845603032574 } },
+  { cameraId: '1711', cameraName: 'CTE (Bishan Flyover)', roadName: 'Central Expressway (CTE)', location: { latitude: 1.35296, longitude: 103.85719 } },
+
+  // BKE & Woodlands (2701 - 2708)
+  { cameraId: '2701', cameraName: 'Woodlands Causeway (Towards Johor)', roadName: 'Woodlands Checkpoint', location: { latitude: 1.447023728, longitude: 103.7716543 } },
+  { cameraId: '2702', cameraName: 'BKE (Woodlands Flyover / Checkpoint Exit)', roadName: 'Bukit Timah Expressway (BKE)', location: { latitude: 1.445554109, longitude: 103.7683397 } },
+  { cameraId: '2703', cameraName: 'BKE (Dairy Farm / Rifle Range)', roadName: 'Bukit Timah Expressway (BKE)', location: { latitude: 1.35047790791386, longitude: 103.791033581325 } },
+  { cameraId: '2704', cameraName: 'BKE (Mandai Lake Flyover)', roadName: 'Bukit Timah Expressway (BKE)', location: { latitude: 1.429588536, longitude: 103.769311 } },
+  { cameraId: '2705', cameraName: 'BKE (Dairy Farm Flyover)', roadName: 'Bukit Timah Expressway (BKE)', location: { latitude: 1.36728572, longitude: 103.7794698 } },
+  { cameraId: '2706', cameraName: 'BKE (Mandai Road Flyover)', roadName: 'Bukit Timah Expressway (BKE)', location: { latitude: 1.414142, longitude: 103.771168 } },
+  { cameraId: '2707', cameraName: 'BKE (Senja Flyover)', roadName: 'Bukit Timah Expressway (BKE)', location: { latitude: 1.3983, longitude: 103.774247 } },
+  { cameraId: '2708', cameraName: 'BKE (Cashew / Bukit Panjang Flyover)', roadName: 'Bukit Timah Expressway (BKE)', location: { latitude: 1.3865, longitude: 103.7747 } },
+
+  // ECP (3702 - 3798)
+  { cameraId: '3702', cameraName: 'ECP (Changi Airport / Coast)', roadName: 'East Coast Parkway (ECP)', location: { latitude: 1.33831, longitude: 103.98032 } },
+  { cameraId: '3704', cameraName: 'ECP (Fort Road Flyover)', roadName: 'East Coast Parkway (ECP)', location: { latitude: 1.2958550156561, longitude: 103.880314665981 } },
+  { cameraId: '3705', cameraName: 'ECP (Tanah Merah Coast)', roadName: 'East Coast Parkway (ECP)', location: { latitude: 1.32743, longitude: 103.97383 } },
+  { cameraId: '3793', cameraName: 'ECP (Laguna Flyover)', roadName: 'East Coast Parkway (ECP)', location: { latitude: 1.309330837, longitude: 103.9350504 } },
+  { cameraId: '3795', cameraName: 'ECP (Still Road South)', roadName: 'East Coast Parkway (ECP)', location: { latitude: 1.30145145166066, longitude: 103.910596320237 } },
+  { cameraId: '3796', cameraName: 'ECP (Tanjong Katong Flyover)', roadName: 'East Coast Parkway (ECP)', location: { latitude: 1.297512569, longitude: 103.8983019 } },
+  { cameraId: '3797', cameraName: 'ECP (Mountbatten Road)', roadName: 'East Coast Parkway (ECP)', location: { latitude: 1.29565733262976, longitude: 103.885283049309 } },
+  { cameraId: '3798', cameraName: 'ECP (Benjamin Sheares Bridge / Marina East)', roadName: 'East Coast Parkway (ECP)', location: { latitude: 1.29158484, longitude: 103.8615987 } },
+
+  // AYE, Tuas & Sentosa (4701 - 4799)
+  { cameraId: '4701', cameraName: 'AYE (Alexandra Flyover)', roadName: 'Ayer Rajah Expressway (AYE)', location: { latitude: 1.2871, longitude: 103.79633 } },
+  { cameraId: '4702', cameraName: 'AYE (Keppel Viaduct)', roadName: 'Ayer Rajah Expressway (AYE)', location: { latitude: 1.27237, longitude: 103.8324 } },
+  { cameraId: '4703', cameraName: 'Tuas Checkpoint (Departure Plaza)', roadName: 'Tuas Checkpoint', location: { latitude: 1.348697862, longitude: 103.6350413 } },
+  { cameraId: '4704', cameraName: 'AYE (Radin Mas Flyover)', roadName: 'Ayer Rajah Expressway (AYE)', location: { latitude: 1.27877, longitude: 103.82375 } },
+  { cameraId: '4705', cameraName: 'AYE (Pandan Reservoir / Teban)', roadName: 'Ayer Rajah Expressway (AYE)', location: { latitude: 1.32618, longitude: 103.73028 } },
+  { cameraId: '4706', cameraName: 'AYE (Buona Vista Flyover)', roadName: 'Ayer Rajah Expressway (AYE)', location: { latitude: 1.29792, longitude: 103.78205 } },
+  { cameraId: '4707', cameraName: 'AYE (Tuas Flyover)', roadName: 'Ayer Rajah Expressway (AYE)', location: { latitude: 1.33344648135658, longitude: 103.652700847056 } },
+  { cameraId: '4708', cameraName: 'AYE (Portsdown Flyover)', roadName: 'Ayer Rajah Expressway (AYE)', location: { latitude: 1.29939, longitude: 103.7799 } },
+  { cameraId: '4709', cameraName: 'AYE (Clementi Flyover)', roadName: 'Ayer Rajah Expressway (AYE)', location: { latitude: 1.312019, longitude: 103.763002 } },
+  { cameraId: '4710', cameraName: 'AYE (Faber Flyover)', roadName: 'Ayer Rajah Expressway (AYE)', location: { latitude: 1.32153, longitude: 103.75273 } },
+  { cameraId: '4712', cameraName: 'AYE (Towards Tuas Checkpoint)', roadName: 'Ayer Rajah Expressway (AYE)', location: { latitude: 1.341244001, longitude: 103.6439134 } },
+  { cameraId: '4713', cameraName: 'Tuas Second Link (Arrival Corridor)', roadName: 'Tuas Checkpoint', location: { latitude: 1.347645829, longitude: 103.6366955 } },
+  { cameraId: '4714', cameraName: 'AYE (West Coast Highway Flyover)', roadName: 'Ayer Rajah Expressway (AYE)', location: { latitude: 1.31023, longitude: 103.76438 } },
+  { cameraId: '4716', cameraName: 'AYE (Benoi Flyover)', roadName: 'Ayer Rajah Expressway (AYE)', location: { latitude: 1.32227, longitude: 103.67453 } },
+  { cameraId: '4798', cameraName: 'Sentosa Gateway / Telok Blangah', roadName: 'Sentosa Gateway', location: { latitude: 1.25999999687243, longitude: 103.823611110166 } },
+  { cameraId: '4799', cameraName: 'HarbourFront / Keppel Road Entrance', roadName: 'Telok Blangah Road', location: { latitude: 1.26027777363278, longitude: 103.823888890049 } },
+
+  // PIE (5794 - 6716)
+  { cameraId: '5794', cameraName: 'PIE (Eunos Flyover)', roadName: 'Pan Island Expressway (PIE)', location: { latitude: 1.3309693, longitude: 103.9168616 } },
+  { cameraId: '5795', cameraName: 'PIE (Paya Lebar Flyover)', roadName: 'Pan Island Expressway (PIE)', location: { latitude: 1.326024822, longitude: 103.905625 } },
+  { cameraId: '5797', cameraName: 'PIE (Woodsville Flyover)', roadName: 'Pan Island Expressway (PIE)', location: { latitude: 1.322875288, longitude: 103.8910793 } },
+  { cameraId: '5798', cameraName: 'PIE (Kallang Bahru Flyover)', roadName: 'Pan Island Expressway (PIE)', location: { latitude: 1.32036078126842, longitude: 103.877174116489 } },
+  { cameraId: '5799', cameraName: 'PIE (Kim Keat Flyover)', roadName: 'Pan Island Expressway (PIE)', location: { latitude: 1.328171608, longitude: 103.8685191 } },
+  { cameraId: '6701', cameraName: 'PIE (Whampoa Flyover)', roadName: 'Pan Island Expressway (PIE)', location: { latitude: 1.329334, longitude: 103.858222 } },
+  { cameraId: '6703', cameraName: 'PIE (Thomson Flyover)', roadName: 'Pan Island Expressway (PIE)', location: { latitude: 1.328899, longitude: 103.84121 } },
+  { cameraId: '6704', cameraName: 'PIE (Mount Pleasant Flyover)', roadName: 'Pan Island Expressway (PIE)', location: { latitude: 1.32657403632366, longitude: 103.826857295633 } },
+  { cameraId: '6705', cameraName: 'PIE (Adam Flyover)', roadName: 'Pan Island Expressway (PIE)', location: { latitude: 1.332124, longitude: 103.81768 } },
+  { cameraId: '6706', cameraName: 'PIE (Eng Neo Flyover / BKE)', roadName: 'Pan Island Expressway (PIE)', location: { latitude: 1.349428893, longitude: 103.7952799 } },
+  { cameraId: '6708', cameraName: 'PIE (Jurong West / Pioneer)', roadName: 'Pan Island Expressway (PIE)', location: { latitude: 1.345996, longitude: 103.69016 } },
+  { cameraId: '6710', cameraName: 'PIE (Anak Bukit Flyover)', roadName: 'Pan Island Expressway (PIE)', location: { latitude: 1.344205, longitude: 103.78577 } },
+  { cameraId: '6711', cameraName: 'PIE (Upper Changi Flyover)', roadName: 'Pan Island Expressway (PIE)', location: { latitude: 1.33771, longitude: 103.977827 } },
+  { cameraId: '6712', cameraName: 'PIE (Clementi Road Flyover)', roadName: 'Pan Island Expressway (PIE)', location: { latitude: 1.332691, longitude: 103.770278 } },
+  { cameraId: '6713', cameraName: 'PIE (Tampines Flyover)', roadName: 'Pan Island Expressway (PIE)', location: { latitude: 1.340298, longitude: 103.945652 } },
+  { cameraId: '6714', cameraName: 'PIE (Jalan Bahar Flyover)', roadName: 'Pan Island Expressway (PIE)', location: { latitude: 1.361742, longitude: 103.703341 } },
+  { cameraId: '6715', cameraName: 'PIE (Corporation Flyover)', roadName: 'Pan Island Expressway (PIE)', location: { latitude: 1.356299, longitude: 103.716071 } },
+  { cameraId: '6716', cameraName: 'PIE (Tuas Road Flyover)', roadName: 'Pan Island Expressway (PIE)', location: { latitude: 1.322893, longitude: 103.6635051 } },
+
+  // TPE (7791 - 7798)
+  { cameraId: '7791', cameraName: 'TPE (Loyang Flyover)', roadName: 'Tampines Expressway (TPE)', location: { latitude: 1.354245, longitude: 103.963782 } },
+  { cameraId: '7793', cameraName: 'TPE (Tampines Ave 10)', roadName: 'Tampines Expressway (TPE)', location: { latitude: 1.37704704, longitude: 103.92946983 } },
+  { cameraId: '7794', cameraName: 'TPE (Punggol Flyover)', roadName: 'Tampines Expressway (TPE)', location: { latitude: 1.37988658, longitude: 103.92009174 } },
+  { cameraId: '7795', cameraName: 'TPE (Punggol West Flyover)', roadName: 'Tampines Expressway (TPE)', location: { latitude: 1.38432741, longitude: 103.91585701 } },
+  { cameraId: '7796', cameraName: 'TPE (Seletar Flyover)', roadName: 'Tampines Expressway (TPE)', location: { latitude: 1.39559294, longitude: 103.90515712 } },
+  { cameraId: '7797', cameraName: 'TPE (Jalan Kayu Flyover)', roadName: 'Tampines Expressway (TPE)', location: { latitude: 1.40002575, longitude: 103.85702534 } },
+  { cameraId: '7798', cameraName: 'TPE (Yio Chu Kang)', roadName: 'Tampines Expressway (TPE)', location: { latitude: 1.39748842, longitude: 103.85400467 } },
+
+  // KJE (8701 - 8706)
+  { cameraId: '8701', cameraName: 'KJE (Choa Chu Kang Way)', roadName: 'Kranji Expressway (KJE)', location: { latitude: 1.38647, longitude: 103.74143 } },
+  { cameraId: '8702', cameraName: 'KJE (BKE Junction Flyover)', roadName: 'Kranji Expressway (KJE)', location: { latitude: 1.39059, longitude: 103.7717 } },
+  { cameraId: '8704', cameraName: 'KJE (Choa Chu Kang Drive)', roadName: 'Kranji Expressway (KJE)', location: { latitude: 1.3899, longitude: 103.74843 } },
+  { cameraId: '8706', cameraName: 'KJE (Tengah Flyover)', roadName: 'Kranji Expressway (KJE)', location: { latitude: 1.3664, longitude: 103.70899 } },
+
+  // SLE (9701 - 9706)
+  { cameraId: '9701', cameraName: 'SLE (Lentor Flyover)', roadName: 'Seletar Expressway (SLE)', location: { latitude: 1.39466333, longitude: 103.83474601 } },
+  { cameraId: '9702', cameraName: 'SLE (Upper Thomson Flyover)', roadName: 'Seletar Expressway (SLE)', location: { latitude: 1.39474081, longitude: 103.81797086 } },
+  { cameraId: '9703', cameraName: 'SLE (Woodlands South Flyover)', roadName: 'Seletar Expressway (SLE)', location: { latitude: 1.422857, longitude: 103.773005 } },
+  { cameraId: '9704', cameraName: 'SLE (Mandai Flyover)', roadName: 'Seletar Expressway (SLE)', location: { latitude: 1.42214311, longitude: 103.79542062 } },
+  { cameraId: '9705', cameraName: 'SLE (Woodlands Ave 2 Flyover)', roadName: 'Seletar Expressway (SLE)', location: { latitude: 1.42627712, longitude: 103.78716637 } },
+  { cameraId: '9706', cameraName: 'SLE (Ulu Sembawang Flyover)', roadName: 'Seletar Expressway (SLE)', location: { latitude: 1.41270056, longitude: 103.80642712 } },
 ];
 
 export const INITIAL_TRAFFIC_INCIDENTS: TrafficIncident[] = [
